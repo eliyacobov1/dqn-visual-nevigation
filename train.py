@@ -7,13 +7,16 @@ from q_learning_agent import QLearningAgent
 from dqn_agent import DQNAgent
 
 
-def run_episode(env, agent, train=True, max_steps=100, record_path=False):
+def run_episode(env, agent, train=True, max_steps=100, record_path=False,
+                return_details=False):
     """Run a single episode.
 
     If *record_path* is True, also return the sequence of visited states."""
     state = env.reset()
     total_reward = 0
     path = [state]
+    steps = 0
+    success = False
     for _ in range(max_steps):
         action = agent.select_action(state)
         next_state, reward, done, _ = env.step(action)
@@ -24,9 +27,17 @@ def run_episode(env, agent, train=True, max_steps=100, record_path=False):
         if record_path:
             path.append(state)
         if done:
+            success = True
+            steps += 1
             break
+        steps += 1
     if train:
         agent.decay_epsilon()
+    if return_details:
+        info = {"reward": total_reward, "success": success, "steps": steps}
+        if record_path:
+            info["path"] = path
+        return info
     if record_path:
         return total_reward, path
     return total_reward
@@ -108,6 +119,29 @@ def plot_q_evolution(q_history, state_index=0):
     plt.show()
 
 
+def evaluate_agent(env, agent, episodes=100, max_steps=100):
+    """Evaluate *agent* for a number of episodes.
+
+    Returns the success rate and average steps taken."""
+    original_epsilon = getattr(agent, "epsilon", None)
+    if original_epsilon is not None:
+        agent.epsilon = 0.0
+    successes = 0
+    total_steps = 0
+    for _ in range(episodes):
+        info = run_episode(
+            env, agent, train=False, max_steps=max_steps, return_details=True
+        )
+        if info["success"]:
+            successes += 1
+        total_steps += info["steps"]
+    if original_epsilon is not None:
+        agent.epsilon = original_epsilon
+    success_rate = successes / episodes
+    avg_steps = total_steps / episodes
+    return success_rate, avg_steps
+
+
 def animate_trajectory(env, path, interval=200):
     """Animate a trajectory given a sequence of states."""
     plt.ion()
@@ -146,6 +180,8 @@ if __name__ == "__main__":
                         help="Fraction of cells that are obstacles")
     parser.add_argument("--random-start-goal", action="store_true",
                         help="Randomize start and goal each episode")
+    parser.add_argument("--eval-episodes", type=int, default=0,
+                        help="Run evaluation for N episodes after training")
     args = parser.parse_args()
 
     env = GridWorldEnv(grid_size=tuple(args.grid_size),
@@ -177,6 +213,15 @@ if __name__ == "__main__":
         if (ep + 1) % 100 == 0:
             print(
                 f"Episode {ep+1}, Reward: {ep_reward}, Epsilon: {agent.epsilon:.3f}")
+
+    if args.eval_episodes > 0:
+        success_rate, avg_steps = evaluate_agent(
+            env, agent, episodes=args.eval_episodes
+        )
+        print(
+            f"Evaluation over {args.eval_episodes} episodes - "
+            f"Success rate: {success_rate:.2f}, Avg steps: {avg_steps:.2f}"
+        )
 
     plot_learning_curve(rewards)
 

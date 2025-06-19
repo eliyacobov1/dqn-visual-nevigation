@@ -43,3 +43,15 @@ Additional flags enable richer visualisations:
 - `--heatmap` shows a heat map of how often each cell was visited during training.
 - `--q-history` plots how the Q-values for the start state evolve over episodes.
 - `--animate` plays back the final trajectory with a red trace.
+- `--eval-episodes` evaluates the trained agent for the given number of
+  episodes and prints the success rate and average steps.
+
+Example evaluation comparing Q-learning and DQN:
+
+```bash
+python train.py --algorithm qlearning --episodes 300 --eval-episodes 50
+python train.py --algorithm dqn --episodes 300 --eval-episodes 50
+```
+
+The printed metrics make it easy to compare algorithms or different parameter
+settings.
