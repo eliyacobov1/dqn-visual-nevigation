@@ -8,7 +8,7 @@ from dqn_agent import DQNAgent
 
 
 def run_episode(env, agent, train=True, max_steps=100, record_path=False,
-                return_details=False):
+                return_details=False, planning_steps=0, replay_steps=0):
     """Run a single episode.
 
     If *record_path* is True, also return the sequence of visited states."""
@@ -17,11 +17,23 @@ def run_episode(env, agent, train=True, max_steps=100, record_path=False,
     path = [state]
     steps = 0
     success = False
+    model = {} if train and planning_steps > 0 else None
+    replay_buffer = [] if train and replay_steps > 0 else None
     for _ in range(max_steps):
         action = agent.select_action(state)
         next_state, reward, done, _ = env.step(action)
         if train:
             agent.update(state, action, reward, next_state, done)
+            if replay_buffer is not None:
+                replay_buffer.append((state, action, reward, next_state, done))
+                for _ in range(replay_steps):
+                    s, a, r, ns, d = replay_buffer[np.random.randint(len(replay_buffer))]
+                    agent.update(s, a, r, ns, d)
+            if planning_steps > 0:
+                model[(state, action)] = (next_state, reward, done)
+                for _ in range(planning_steps):
+                    (s, a), (ns, r, d) = list(model.items())[np.random.randint(len(model))]
+                    agent.update(s, a, r, ns, d)
         state = next_state
         total_reward += reward
         if record_path:
@@ -182,6 +194,10 @@ if __name__ == "__main__":
                         help="Randomize start and goal each episode")
     parser.add_argument("--eval-episodes", type=int, default=0,
                         help="Run evaluation for N episodes after training")
+    parser.add_argument("--planning-steps", type=int, default=0,
+                        help="Number of Dyna-style planning updates per step")
+    parser.add_argument("--replay-steps", type=int, default=0,
+                        help="Number of replay buffer updates per step")
     args = parser.parse_args()
 
     env = GridWorldEnv(grid_size=tuple(args.grid_size),
@@ -199,7 +215,9 @@ if __name__ == "__main__":
     q_history = []
     for ep in range(n_episodes):
         record_path = args.heatmap
-        result = run_episode(env, agent, train=True, record_path=record_path)
+        result = run_episode(env, agent, train=True, record_path=record_path,
+                            planning_steps=args.planning_steps,
+                            replay_steps=args.replay_steps)
         if record_path:
             ep_reward, path = result
             for state in path:
@@ -237,5 +255,12 @@ if __name__ == "__main__":
         visualize_episode(env, agent)
 
     if args.animate:
-        _, path = run_episode(env, agent, train=False, record_path=True)
+        _, path = run_episode(
+            env,
+            agent,
+            train=False,
+            record_path=True,
+            planning_steps=args.planning_steps,
+            replay_steps=args.replay_steps,
+        )
         animate_trajectory(env, path)
