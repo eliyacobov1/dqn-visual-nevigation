@@ -1,4 +1,5 @@
 import numpy as np
+from matplotlib import colors
 
 class GridWorldEnv:
     def __init__(self, grid_size=(6, 6), start=(0, 0), goal=(5, 5), obstacles=None):
@@ -45,14 +46,27 @@ class GridWorldEnv:
         self.agent_pos = next_pos
         return self.pos_to_state(self.agent_pos), reward, done, {}
 
-    def render(self):
-        grid = np.full(self.grid_size, ".", dtype=str)
+    def render(self, ax=None):
+        """Render the grid. If *ax* is provided, draw using matplotlib."""
+        grid = np.zeros(self.grid_size, dtype=int)
         for oy, ox in self.obstacles:
-            grid[oy, ox] = "#"
+            grid[oy, ox] = 1
         gy, gx = self.goal
-        grid[gy, gx] = "G"
-        ay, ax = self.agent_pos
-        grid[ay, ax] = "A"
-        for row in grid:
-            print(" ".join(row))
-        print()
+        grid[gy, gx] = 2
+        ay, axpos = self.agent_pos
+        grid[ay, axpos] = 3
+
+        if ax is None:
+            mapping = {0: ".", 1: "#", 2: "G", 3: "A"}
+            for row in grid:
+                print(" ".join(mapping[cell] for cell in row))
+            print()
+        else:
+            cmap = colors.ListedColormap(["white", "black", "green", "blue"])
+            ax.clear()
+            ax.imshow(grid, cmap=cmap, origin="upper", vmin=0, vmax=3)
+            ax.set_xticks(np.arange(-0.5, self.grid_size[1], 1), minor=True)
+            ax.set_yticks(np.arange(-0.5, self.grid_size[0], 1), minor=True)
+            ax.grid(which="minor", color="gray", linewidth=1)
+            ax.tick_params(left=False, bottom=False,
+                           labelleft=False, labelbottom=False)

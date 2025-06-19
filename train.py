@@ -53,12 +53,38 @@ def plot_policy(env, agent):
     print()
 
 
+def visualize_episode(env, agent, interval=1, max_steps=100):
+    """Visualize an episode by rendering the grid every *interval* steps."""
+    plt.ion()
+    fig, ax = plt.subplots()
+    state = env.reset()
+    env.render(ax=ax)
+    ax.set_title("Start")
+    plt.pause(0.5)
+
+    for step in range(max_steps):
+        action = agent.select_action(state)
+        next_state, _, done, _ = env.step(action)
+        if step % interval == 0 or done:
+            env.render(ax=ax)
+            ax.set_title(f"Step {step + 1}")
+            plt.pause(0.5)
+        state = next_state
+        if done:
+            break
+
+    plt.ioff()
+    plt.show()
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--algorithm", choices=["qlearning", "dqn"], default="qlearning",
                         help="Learning algorithm to use")
     parser.add_argument("--episodes", type=int, default=500,
                         help="Number of training episodes")
+    parser.add_argument("--visualize", action="store_true",
+                        help="Visualize a demonstration episode after training")
     args = parser.parse_args()
 
     env = GridWorldEnv()
@@ -81,3 +107,6 @@ if __name__ == "__main__":
 
     print("Learned Policy:")
     plot_policy(env, agent)
+
+    if args.visualize:
+        visualize_episode(env, agent)
