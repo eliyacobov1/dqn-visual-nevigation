@@ -37,3 +37,9 @@ python train.py --algorithm dqn
 The script prints progress every 100 episodes, plots the learning curve, and
 prints the learned policy grid at the end. Use `--visualize` to see an animated
 episode demonstrating the learned policy.
+
+Additional flags enable richer visualisations:
+
+- `--heatmap` shows a heat map of how often each cell was visited during training.
+- `--q-history` plots how the Q-values for the start state evolve over episodes.
+- `--animate` plays back the final trajectory with a red trace.
