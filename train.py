@@ -85,9 +85,17 @@ if __name__ == "__main__":
                         help="Number of training episodes")
     parser.add_argument("--visualize", action="store_true",
                         help="Visualize a demonstration episode after training")
+    parser.add_argument("--grid-size", type=int, nargs=2, metavar=("H", "W"),
+                        default=(6, 6), help="Grid dimensions")
+    parser.add_argument("--obstacle-density", type=float, default=0.0,
+                        help="Fraction of cells that are obstacles")
+    parser.add_argument("--random-start-goal", action="store_true",
+                        help="Randomize start and goal each episode")
     args = parser.parse_args()
 
-    env = GridWorldEnv()
+    env = GridWorldEnv(grid_size=tuple(args.grid_size),
+                       obstacle_density=args.obstacle_density,
+                       random_start_goal=args.random_start_goal)
 
     if args.algorithm == "dqn":
         agent = DQNAgent(n_states=env.n_states, n_actions=env.n_actions)

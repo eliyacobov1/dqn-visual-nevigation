@@ -2,14 +2,41 @@ import numpy as np
 from matplotlib import colors
 
 class GridWorldEnv:
-    def __init__(self, grid_size=(6, 6), start=(0, 0), goal=(5, 5), obstacles=None):
+    def __init__(self, grid_size=(6, 6), start=(0, 0), goal=(5, 5), obstacles=None,
+                 obstacle_density=0.0, random_start_goal=False, seed=None):
+        """Create a GridWorld environment.
+
+        Parameters
+        ----------
+        grid_size : tuple of int, optional
+            Dimensions of the grid (height, width).
+        start : tuple of int, optional
+            Starting coordinates of the agent.
+        goal : tuple of int, optional
+            Goal coordinates.
+        obstacles : list of tuple of int, optional
+            Fixed obstacle locations. Ignored if *obstacle_density* is set.
+        obstacle_density : float, optional
+            Fraction of cells filled with obstacles, placed randomly at each
+            reset. Defaults to 0 (no random obstacles).
+        random_start_goal : bool, optional
+            If True, choose new random start and goal positions on each reset.
+        seed : int, optional
+            Random seed for reproducibility.
+        """
+
         self.grid_size = grid_size
         self.start = start
         self.goal = goal
         self.obstacles = obstacles if obstacles else [(1, 1), (2, 3), (3, 2), (4, 4)]
+        self.obstacle_density = obstacle_density
+        self.random_start_goal = random_start_goal
+        self.rng = np.random.default_rng(seed)
+
         self.action_space = [0, 1, 2, 3]  # Up, Down, Left, Right
         self.n_actions = 4
         self.n_states = grid_size[0] * grid_size[1]
+
         self.reset()
 
     def state_to_pos(self, state):
@@ -18,7 +45,30 @@ class GridWorldEnv:
     def pos_to_state(self, pos):
         return pos[0] * self.grid_size[1] + pos[1]
 
+    def _generate_random_obstacles(self):
+        n_cells = self.grid_size[0] * self.grid_size[1]
+        n_obs = int(self.obstacle_density * n_cells)
+        # All positions excluding start and goal
+        cells = [(y, x) for y in range(self.grid_size[0])
+                 for x in range(self.grid_size[1])
+                 if (y, x) not in {self.start, self.goal}]
+        idx = self.rng.choice(len(cells), size=n_obs, replace=False)
+        return [cells[i] for i in idx]
+
+    def _random_start_and_goal(self):
+        cells = [(y, x) for y in range(self.grid_size[0])
+                 for x in range(self.grid_size[1])]
+        start_idx = self.rng.integers(len(cells))
+        start = cells.pop(start_idx)
+        goal = cells[self.rng.integers(len(cells))]
+        return start, goal
+
     def reset(self):
+        if self.random_start_goal:
+            self.start, self.goal = self._random_start_and_goal()
+        if self.obstacle_density > 0:
+            self.obstacles = self._generate_random_obstacles()
+
         self.agent_pos = self.start
         return self.pos_to_state(self.agent_pos)
 
