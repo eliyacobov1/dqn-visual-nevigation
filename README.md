@@ -23,4 +23,4 @@ Run training (choose `qlearning` or `dqn`):
 python train.py --algorithm dqn
 ```
 
-The script prints progress every 100 episodes, plots the learning curve, and prints the learned policy grid at the end.
+The script prints progress every 100 episodes, plots the learning curve, and prints the learned policy grid at the end. Use `--visualize` to see an animated episode demonstrating the learned policy.
