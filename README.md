@@ -1,6 +1,6 @@
 # Reinforcement Learning GridWorld Example
 
-This repository implements a minimal reinforcement learning playground. An agent learns to navigate a simple 2D grid using either classic Q-learning or a lightweight Deep Q-Network (DQN) built with NumPy.
+This repository implements a minimal reinforcement learning playground. An agent learns to navigate a simple 2D grid using either classic Q-learning or a lightweight Deep Q-Network (DQN) built with NumPy. It supports DynaCue-style planning with synthetic trajectories and a model-free approach using a replay buffer.
 
 ## Files
 
@@ -45,6 +45,10 @@ Additional flags enable richer visualisations:
 - `--animate` plays back the final trajectory with a red trace.
 - `--eval-episodes` evaluates the trained agent for the given number of
   episodes and prints the success rate and average steps.
+- `--planning-steps` uses DynaCue-style planning by sampling synthetic
+  transitions after each real step.
+- `--replay-steps` performs additional updates from a replay buffer
+  after each real step.
 
 Example evaluation comparing Q-learning and DQN:
 
@@ -55,3 +59,14 @@ python train.py --algorithm dqn --episodes 300 --eval-episodes 50
 
 The printed metrics make it easy to compare algorithms or different parameter
 settings.
+
+### Comparing Dyna-style planning and replay buffer
+
+Run `python compare_methods.py` to train two agents on the default grid:
+
+1. **DynaQ** with `--planning-steps` enabled.
+2. **Replay Buffer** with `--replay-steps` enabled.
+
+The script prints the average reward and evaluation success rate for both
+approaches so you can see how model-based planning compares with the
+model-free alternative.
