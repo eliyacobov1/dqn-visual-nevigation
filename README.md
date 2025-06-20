@@ -70,3 +70,27 @@ Run `python compare_methods.py` to train two agents on the default grid:
 The script prints the average reward and evaluation success rate for both
 approaches so you can see how model-based planning compares with the
 model-free alternative.
+
+### Benchmarking
+
+Run `python gridworld_benchmark.py` to train DQN and Q-learning agents on the
+GridWorld environment. The benchmark also includes a heuristic agent that
+follows a shortest path computed by breadth-first search and a random baseline
+that avoids invalid moves. The script reports the success rate and average
+steps to reach the goal and plots learning curves for each trained agent.
+
+The environment used for benchmarking is a fixed 6×6 grid with start position
+at `(0, 0)` and goal at `(5, 5)`. Four obstacles block cells `(1, 1)`,
+`(2, 3)`, `(3, 2)` and `(4, 4)`. This configuration defines the dataset of
+state transitions the agents see during training. After 300 training episodes,
+evaluation over 50 episodes yields the following metrics:
+
+| Agent      | Success Rate | Avg. Steps |
+| ---------- | ------------ | ---------- |
+| DQN        | 1.00         | 10.0       |
+| Q-Learning | 1.00         | 10.0       |
+| Heuristic  | 1.00         | 10.0       |
+| Random     | ~0.44        | ~86        |
+
+These results demonstrate that both learning agents reliably solve the grid
+while the random policy struggles to reach the goal.
